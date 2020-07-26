@@ -3,14 +3,13 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
-using mroot_lib;
 using System.Windows.Forms;
 using System.Linq;
 using System.IO;
 
 namespace Wox.Plugin.Recent
 {
-    public class Main : IPlugin, IContextMenu
+    public class Main : IPlugin
     {
         #region members
 
@@ -22,7 +21,7 @@ namespace Wox.Plugin.Recent
 
         public void Init(PluginInitContext context)
         {
-           // MessageBox.Show("attach point for debugging");
+            // MessageBox.Show("attach point for debugging");
             _recentActionProcessor.Reload();
         }
 
@@ -60,7 +59,7 @@ namespace Wox.Plugin.Recent
                 TargetDescriptor target = recentActionDescriptor.Target;
 
                 Result commandResult = new Result();
-                
+
                 if (target.IsDirectory)
                 {
                     commandResult.Title = target.Name;
@@ -78,7 +77,7 @@ namespace Wox.Plugin.Recent
                 }
 
                 commandResult.Score = 1000;
-                
+
                 commandResult.Action = e =>
                 {
                     void thread_execution()
@@ -123,29 +122,6 @@ namespace Wox.Plugin.Recent
             return false;
         }
 
-        public List<Result> LoadContextMenus(Result selectedResult)
-        {
-            return new List<Result>
-            {
-                new Result()
-                {
-                    Title = "Open in text editor",
-                    SubTitle = selectedResult.SubTitle,
-                    IcoPath = "Images\\sublime_logo.png",
-                    Action = e =>
-                    {
-                        string param = mroot.substitue_enviro_vars(selectedResult.SubTitle);
-                        string exec_path = mroot.substitue_enviro_vars("||default_file_processor||");
-
-                        Process process = new Process();
-                        process.StartInfo.FileName = exec_path;
-                        process.StartInfo.Arguments = param;
-                        process.Start();
-                        return true;
-                    }
-                }
-            };
-        }
     }
 
     #endregion
