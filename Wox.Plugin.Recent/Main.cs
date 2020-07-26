@@ -60,8 +60,14 @@ namespace Wox.Plugin.Recent
                 TargetDescriptor target = recentActionDescriptor.Target;
 
                 Result commandResult = new Result();
-                
-                if (target.IsDirectory)
+
+                if (target == null)
+                {
+                    commandResult.Title = recentActionDescriptor.ActionName;
+                    commandResult.SubTitle = recentActionDescriptor.ActionLink;
+                    commandResult.IcoPath = "Images\\recent_icon.png";
+                }
+                else if (target.IsDirectory)
                 {
                     commandResult.Title = target.Name;
                     commandResult.SubTitle = $"Directory : {target.Path} ";

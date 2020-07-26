@@ -103,6 +103,11 @@ namespace Wox.Plugin.Recent
             {
                 Shell32.ShellLinkObject link = (Shell32.ShellLinkObject)folderItem.GetLink;
 
+                if (string.IsNullOrWhiteSpace(link.Path))
+                {
+                    return null;
+                }
+
                 TargetDescriptor desc = new TargetDescriptor();
                 desc.Path = link.Path;
                 desc.Extension = Path.GetExtension(desc.Path);
@@ -115,7 +120,7 @@ namespace Wox.Plugin.Recent
                 return desc;
             }
 
-            return new TargetDescriptor();
+            return null;
         }
         private readonly List<RecentActionDescriptor> _recentActionList = new List<RecentActionDescriptor>();
 
