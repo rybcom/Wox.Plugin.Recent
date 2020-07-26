@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Security.Cryptography;
+using System.Threading;
 using Shell32;
 
 namespace Wox.Plugin.Recent
 {
 
-    
+
 
     public class TargetDescriptor
     {
@@ -19,6 +19,10 @@ namespace Wox.Plugin.Recent
         public string Name { get; set; }
 
         public string Path { get; set; }
+
+        public string WorkingDirectory { get; set; }
+
+        public bool IsDirectory { get; set; }
 
     }
 
@@ -32,10 +36,11 @@ namespace Wox.Plugin.Recent
 
         public TargetDescriptor Target { get; set; }
 
+
     }
 
 
-    public class RecentFileProcessor
+    public class RecentActionProcessor
     {
 
 
@@ -48,51 +53,42 @@ namespace Wox.Plugin.Recent
 
         public void Reload()
         {
-            GrabRecentFiles();
+            GrabRecentActions();
         }
 
-        public List<RecentActionDescriptor> RecentFilesList => _recentFileList;
-
-        //public IEnumerable<String> IndexedFolderPaths
-        //{
-        //    get
-        //    {
-        //        XmlDocument doc = new XmlDocument();
-        //        doc.LoadXml(File.ReadAllText(Paths.ConfigFile));
-
-        //        XmlNodeList folders = doc.DocumentElement.SelectNodes("/settings/indexed_folders/folder");
-
-        //        foreach (XmlNode folder in folders)
-        //        {
-        //            string path =  mroot.substitue_enviro_vars(folder.Attributes["path"].Value);
-        //            if (Directory.Exists(path))
-        //            {
-        //                yield return path;
-        //            }
-        //        }
-        //    }
-        //}
+        public List<RecentActionDescriptor> RecentActionList => _recentActionList;
 
         #endregion
 
         #region private
 
-        private void GrabRecentFiles()
+        private void GrabRecentActions()
         {
-            this._recentFileList.Clear();
+            this._recentActionList.Clear();
 
             DirectoryInfo recentDir = new DirectoryInfo(Paths.WindowsRecentDirectory);
 
             foreach (FileInfo fileInfo in recentDir.GetFiles())
             {
-                this._recentFileList.Add(new RecentActionDescriptor()
+                TargetDescriptor target = null;
+                Start_STA_Thread(() => target = GetShortcutTargetDescriptor(fileInfo.FullName));
+
+                this._recentActionList.Add(new RecentActionDescriptor()
                 {
                     ActionLink = fileInfo.FullName,
                     CreationTime = fileInfo.CreationTime,
-                    ActionName = Path.GetFileNameWithoutExtension(fileInfo.FullName)
-                    //Target = GetShortcutTargetDescriptor(fileInfo.FullName)
+                    ActionName = Path.GetFileNameWithoutExtension(fileInfo.FullName),
+                    Target = target
                 }); ;
             }
+        }
+
+        private static void Start_STA_Thread(ThreadStart method)
+        {
+            Thread thread = new Thread(method);
+            thread.SetApartmentState(ApartmentState.STA);
+            thread.Start();
+            thread.Join();
         }
 
         private static TargetDescriptor GetShortcutTargetDescriptor(string shortcutFilename)
@@ -112,13 +108,16 @@ namespace Wox.Plugin.Recent
                 desc.Extension = Path.GetExtension(desc.Path);
                 desc.Name = Path.GetFileName(desc.Path);
                 desc.Arguments = link.Arguments;
+                desc.WorkingDirectory = link.WorkingDirectory;
+
+                desc.IsDirectory = Directory.Exists(link.Path);
 
                 return desc;
             }
 
-            return null;
+            return new TargetDescriptor();
         }
-        private readonly List<RecentActionDescriptor> _recentFileList = new List<RecentActionDescriptor>();
+        private readonly List<RecentActionDescriptor> _recentActionList = new List<RecentActionDescriptor>();
 
         #endregion
     }

@@ -14,7 +14,7 @@ namespace Wox.Plugin.Recent
     {
         #region members
 
-        private readonly RecentFileProcessor _recentFileProcessor = new RecentFileProcessor();
+        private readonly RecentActionProcessor _recentActionProcessor = new RecentActionProcessor();
 
         #endregion
 
@@ -22,8 +22,8 @@ namespace Wox.Plugin.Recent
 
         public void Init(PluginInitContext context)
         {
-            //MessageBox.Show("start point");
-            _recentFileProcessor.Reload();
+           // MessageBox.Show("attach point for debugging");
+            _recentActionProcessor.Reload();
         }
 
         public List<Result> Query(Query query)
@@ -38,7 +38,7 @@ namespace Wox.Plugin.Recent
         {
             if (String.IsNullOrWhiteSpace(query.Search))
             {
-                _recentFileProcessor.Reload();
+                _recentActionProcessor.Reload();
             }
         }
 
@@ -48,21 +48,37 @@ namespace Wox.Plugin.Recent
 
         private void AddCommands(List<Result> resultList, Query query)
         {
-            var enumeration_files = _recentFileProcessor.RecentFilesList.OrderByDescending(x => x.CreationTime);
+            var enumeration_actions = _recentActionProcessor.RecentActionList.OrderByDescending(x => x.CreationTime);
 
-            foreach (var recentActionDescriptor in enumeration_files)
+            foreach (var recentActionDescriptor in enumeration_actions)
             {
                 if (IsEqualOnStart(query.FirstSearch, recentActionDescriptor.ActionName) == false)
                 {
                     continue;
                 }
+
+                TargetDescriptor target = recentActionDescriptor.Target;
+
                 Result commandResult = new Result();
-                //commandResult.Title = recentActionDescriptor.Target.Name;
-                //commandResult.SubTitle = $"{recentActionDescriptor.Target.Path} {recentActionDescriptor.Target.Arguments}";
-                commandResult.Title = recentActionDescriptor.ActionName;
-                commandResult.SubTitle = recentActionDescriptor.ActionLink;
+                
+                if (target.IsDirectory)
+                {
+                    commandResult.Title = target.Name;
+                    commandResult.SubTitle = $"Directory : {target.Path} ";
+                    commandResult.IcoPath = "Images\\recent_dir.png";
+                }
+                else
+                {
+                    var subtitle = String.IsNullOrEmpty(target.Arguments) ?
+                        target.Path : $"{target.Path} ,Args: {target.Arguments}";
+
+                    commandResult.Title = target.Name;
+                    commandResult.SubTitle = subtitle;
+                    commandResult.IcoPath = "Images\\recent.png";
+                }
+
                 commandResult.Score = 1000;
-                commandResult.IcoPath = "Images\\recent_icon.png";
+                
                 commandResult.Action = e =>
                 {
                     void thread_execution()
