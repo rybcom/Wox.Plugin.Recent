@@ -52,11 +52,6 @@ namespace Wox.Plugin.Recent
 
             foreach (var recentActionDescriptor in enumeration_actions)
             {
-                if (IsEqualOnStart(query.FirstSearch, recentActionDescriptor.ActionName) == false)
-                {
-                    continue;
-                }
-
                 TargetDescriptor target = recentActionDescriptor.Target;
 
                 Result commandResult = new Result();
@@ -66,6 +61,7 @@ namespace Wox.Plugin.Recent
                     commandResult.Title = recentActionDescriptor.ActionName;
                     commandResult.SubTitle = recentActionDescriptor.ActionLink;
                     commandResult.IcoPath = "Images\\recent_icon.png";
+
                 }
                 else if (target.IsDirectory)
                 {
@@ -83,8 +79,10 @@ namespace Wox.Plugin.Recent
                     commandResult.IcoPath = "Images\\recent.png";
                 }
 
-                commandResult.Score = 1000;
-                
+              commandResult.Score = (int)(1000 * StringTools.FuzzyMatch(query.Search, commandResult.Title));
+                //commandResult.Title += " " + commandResult.Score;
+
+
                 commandResult.Action = e =>
                 {
                     void thread_execution()
@@ -105,30 +103,7 @@ namespace Wox.Plugin.Recent
             }
         }
 
-        private static bool IsEqualOnStart(string query, params string[] values)
-        {
-            int lengthQuery = query.Length;
-            foreach (var pattern in values)
-            {
-                int lengthPattern = pattern.Length;
-                if (lengthPattern > lengthQuery)
-                {
-                    if (query.Equals(pattern.Substring(0, lengthQuery), StringComparison.CurrentCultureIgnoreCase))
-                    {
-                        return true;
-                    }
-                }
-                else
-                {
-                    if (pattern.Equals(query.Substring(0, lengthQuery), StringComparison.CurrentCultureIgnoreCase))
-                    {
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
-
+      
         public List<Result> LoadContextMenus(Result selectedResult)
         {
             return new List<Result>
