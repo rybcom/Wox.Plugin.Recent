@@ -7,10 +7,11 @@ using mroot_lib;
 using System.Windows.Forms;
 using System.Linq;
 using System.IO;
+using Wox.Infrastructure.Storage;
 
 namespace Wox.Plugin.Recent
 {
-    public class Main : IPlugin, IContextMenu
+    public class Main : IPlugin, IContextMenu, IReloadable, ISavable,ISettingProvider
     {
         #region members
 
@@ -20,9 +21,24 @@ namespace Wox.Plugin.Recent
 
         #region wox overrides
 
+        public System.Windows.Controls.Control CreateSettingPanel()
+        {
+            return new SettingsPanel();
+        }
+
+        public void Save()
+        {
+
+        }
+
+        public void ReloadData()
+        {
+            _recentActionProcessor.Reload();
+        }
+
         public void Init(PluginInitContext context)
         {
-           // MessageBox.Show("attach point for debugging");
+            MessageBox.Show("attach point for debugging");
             _recentActionProcessor.Reload();
         }
 
@@ -34,11 +50,12 @@ namespace Wox.Plugin.Recent
             this.AddCommands(resultList, query);
             return resultList;
         }
+
         public void UpdateRecentFilesAtBeginning(Query query)
         {
             if (String.IsNullOrWhiteSpace(query.Search))
             {
-                _recentActionProcessor.Reload();
+                ReloadData();
             }
         }
 
@@ -79,9 +96,8 @@ namespace Wox.Plugin.Recent
                     commandResult.IcoPath = "Images\\recent.png";
                 }
 
-              commandResult.Score = (int)(1000 * StringTools.FuzzyMatch(query.Search, commandResult.Title));
+                commandResult.Score = (int)(1000 * StringTools.FuzzyMatch(query.Search, commandResult.Title));
                 //commandResult.Title += " " + commandResult.Score;
-
 
                 commandResult.Action = e =>
                 {
@@ -103,7 +119,6 @@ namespace Wox.Plugin.Recent
             }
         }
 
-      
         public List<Result> LoadContextMenus(Result selectedResult)
         {
             return new List<Result>
