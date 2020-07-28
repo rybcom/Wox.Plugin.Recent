@@ -6,9 +6,22 @@
              xmlns:local="clr-namespace:Wox.Plugin.Recent"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
-    <Grid>
-        <StackPanel Background="AliceBlue">
-            <Button>AHoj</Button>
-        </StackPanel>  
+
+    <Grid Margin="10,10,10,0">
+        <StackPanel>
+
+            <StackPanel VerticalAlignment="Top" Grid.Row="1" Height="106" Margin="41,13,0,0">
+                <Label Content="Set directory manager:" Height="28" Margin="0,0,155,0" HorizontalAlignment="Left" Width="290"/>
+                <TextBox x:Name="dirManagerPath" HorizontalAlignment="Left" Height="34" Margin="5,0,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="311" RenderTransformOrigin="0.502,-1.668"/>
+                <Button x:Name="dirChooseSetButton" HorizontalAlignment="Left" Margin="340,-33,-1,0" Width="100" Height="28" Click="dirManagerSetButtonAction" FontSize="10" Content="Choose" />
+            </StackPanel>
+
+            <StackPanel VerticalAlignment="Top" Grid.Row="1" Height="106" Margin="41,13,0,0">
+                <Label Content="Set file processor:" Height="28" Margin="0,0,155,0" HorizontalAlignment="Left" Width="290"/>
+                <TextBox x:Name="fileProcessorPath" HorizontalAlignment="Left" Height="34" Margin="5,0,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="311" RenderTransformOrigin="0.502,-1.668"/>
+                <Button x:Name="fileProcessorSetButton" HorizontalAlignment="Left" Margin="340,-33,-1,0" Width="100" Height="28" Click="fileProcessorSetButtonAction" FontSize="10" Content="Choose" />
+            </StackPanel>
+        </StackPanel>
     </Grid>
+    
 </UserControl>

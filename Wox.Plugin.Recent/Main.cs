@@ -32,7 +32,7 @@ namespace Wox.Plugin.Recent
 
         public System.Windows.Controls.Control CreateSettingPanel()
         {
-            return new SettingsPanel();
+            return new SettingsPanel(_settings);
         }
 
         public void loadSettings()
@@ -50,7 +50,8 @@ namespace Wox.Plugin.Recent
         {
             MessageBox.Show("attach point for debugging");
 
-            loadSettings()
+            loadSettings();
+
             _recentActionProcessor.Reload();
         }
 
