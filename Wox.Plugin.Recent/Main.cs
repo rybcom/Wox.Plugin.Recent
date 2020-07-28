@@ -11,11 +11,20 @@ using Wox.Infrastructure.Storage;
 
 namespace Wox.Plugin.Recent
 {
-    public class Main : IPlugin, IContextMenu, IReloadable, ISavable,ISettingProvider
+
+    public class Settings
+    {
+        public string DirectoryManager { get; set; }
+        public string FileProcessor { get; set; }
+    }
+
+    public class Main : IPlugin, IContextMenu, ISavable,ISettingProvider
     {
         #region members
 
         private readonly RecentActionProcessor _recentActionProcessor = new RecentActionProcessor();
+        private PluginJsonStorage<Settings> _settingsStorage;
+        private Settings _settings;
 
         #endregion
 
@@ -26,19 +35,22 @@ namespace Wox.Plugin.Recent
             return new SettingsPanel();
         }
 
-        public void Save()
+        public void loadSettings()
         {
-
+            _settingsStorage = new PluginJsonStorage<Settings>();
+            _settings = _settingsStorage.Load();
         }
 
-        public void ReloadData()
+        public void Save()
         {
-            _recentActionProcessor.Reload();
+            _settingsStorage.Save();
         }
 
         public void Init(PluginInitContext context)
         {
             MessageBox.Show("attach point for debugging");
+
+            loadSettings()
             _recentActionProcessor.Reload();
         }
 
@@ -55,7 +67,7 @@ namespace Wox.Plugin.Recent
         {
             if (String.IsNullOrWhiteSpace(query.Search))
             {
-                ReloadData();
+                _recentActionProcessor.Reload();
             }
         }
 
