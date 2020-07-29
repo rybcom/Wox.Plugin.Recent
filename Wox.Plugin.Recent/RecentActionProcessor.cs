@@ -8,6 +8,12 @@ namespace Wox.Plugin.Recent
 {
 
 
+    public enum TargetType
+    {
+        Directory,
+        File,
+        Unknown,
+    }
 
     public class TargetDescriptor
     {
@@ -22,7 +28,7 @@ namespace Wox.Plugin.Recent
 
         public string WorkingDirectory { get; set; }
 
-        public bool IsDirectory { get; set; }
+        public TargetType Type { get; set; }
 
     }
 
@@ -99,28 +105,33 @@ namespace Wox.Plugin.Recent
             Shell shell = new Shell();
             Folder folder = shell.NameSpace(pathOnly);
             FolderItem folderItem = folder.ParseName(filenameOnly);
+            
+            TargetDescriptor desc = new TargetDescriptor();
+            desc.Type = TargetType.Unknown;
+
             if (folderItem != null)
             {
                 Shell32.ShellLinkObject link = (Shell32.ShellLinkObject)folderItem.GetLink;
 
                 if (string.IsNullOrWhiteSpace(link.Path))
                 {
-                    return null;
+                    return desc;
                 }
+                else
+                {
+                    desc.Path = link.Path;
+                    desc.Extension = Path.GetExtension(desc.Path);
+                    desc.Name = Path.GetFileName(desc.Path);
+                    desc.Arguments = link.Arguments;
+                    desc.WorkingDirectory = link.WorkingDirectory;
 
-                TargetDescriptor desc = new TargetDescriptor();
-                desc.Path = link.Path;
-                desc.Extension = Path.GetExtension(desc.Path);
-                desc.Name = Path.GetFileName(desc.Path);
-                desc.Arguments = link.Arguments;
-                desc.WorkingDirectory = link.WorkingDirectory;
+                    desc.Type = Directory.Exists(link.Path) ? TargetType.Directory : TargetType.File;
 
-                desc.IsDirectory = Directory.Exists(link.Path);
-
-                return desc;
+                    return desc;
+                }
             }
 
-            return null;
+            return desc;
         }
         private readonly List<RecentActionDescriptor> _recentActionList = new List<RecentActionDescriptor>();
 

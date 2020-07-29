@@ -86,14 +86,14 @@ namespace Wox.Plugin.Recent
 
                 Result commandResult = new Result();
 
-                if (target == null)
+                if (target.Type == TargetType.Unknown)
                 {
                     commandResult.Title = recentActionDescriptor.ActionName;
                     commandResult.SubTitle = recentActionDescriptor.ActionLink;
                     commandResult.IcoPath = "Images\\recent_icon.png";
 
                 }
-                else if (target.IsDirectory)
+                else if (target.Type == TargetType.Directory)
                 {
                     commandResult.Title = target.Name;
                     commandResult.SubTitle = $"Directory : {target.Path} ";
@@ -151,6 +151,12 @@ namespace Wox.Plugin.Recent
 
         public List<Result> LoadContextMenus(Result selectedResult)
         {
+            var action = selectedResult.ContextData as RecentActionDescriptor;
+            if (action.Target.Type == TargetType.Unknown)
+            {
+                return new List<Result>();
+            }
+
             return new List<Result>
             {
                 new Result()
@@ -160,14 +166,8 @@ namespace Wox.Plugin.Recent
                     IcoPath = "Images\\sublime_logo.png",
                     Action = e =>
                     {
-                        var action = selectedResult.ContextData as RecentActionDescriptor;
-                        string param = mroot.substitue_enviro_vars(action.ActionLink);
+                        string param = action.Target.Path;
                         string exec_path =  mroot.substitue_enviro_vars(_settings.FileProcessor);
-
-                        if (action.Target != null)
-                        {
-                            param = action.Target.Path;
-                        }
 
                         Execute(exec_path,param);
 
@@ -181,18 +181,14 @@ namespace Wox.Plugin.Recent
                     IcoPath = "Images\\folder.png",
                     Action = e =>
                     {
-                        var action = selectedResult.ContextData as RecentActionDescriptor;
 
-                        string param = mroot.substitue_enviro_vars(action.ActionLink);
+                        string param = action.Target.Path;
                         string exec_path =  mroot.substitue_enviro_vars(_settings.DirectoryManager);
 
-                        if (action.Target != null)
+                        if(action.Target.Type != TargetType.Directory)
                         {
-                            if(action.Target.IsDirectory == false)
-                            {
-                                var dir = Directory.GetParent(action.Target.Path);
-                                param = dir.FullName;
-                            }
+                             var dir = Directory.GetParent(action.Target.Path);
+                             param = dir.FullName;
                         }
 
                         Execute(exec_path,param);
