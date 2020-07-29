@@ -18,7 +18,7 @@ namespace Wox.Plugin.Recent
         public string FileProcessor { get; set; }
     }
 
-    public class Main : IPlugin, IContextMenu, ISavable,ISettingProvider
+    public class Main : IPlugin, IContextMenu, ISavable, ISettingProvider
     {
         #region members
 
@@ -48,7 +48,7 @@ namespace Wox.Plugin.Recent
 
         public void Init(PluginInitContext context)
         {
-            MessageBox.Show("attach point for debugging");
+            //MessageBox.Show("attach point for debugging");
 
             loadSettings();
 
@@ -78,7 +78,7 @@ namespace Wox.Plugin.Recent
 
         private void AddCommands(List<Result> resultList, Query query)
         {
-            var enumeration_actions = _recentActionProcessor.RecentActionList.OrderByDescending(x => x.CreationTime);
+            var enumeration_actions = _recentActionProcessor.RecentActionList.OrderByDescending(x => x.CreationTime).Distinct();
 
             foreach (var recentActionDescriptor in enumeration_actions)
             {
@@ -110,7 +110,7 @@ namespace Wox.Plugin.Recent
                 }
 
                 commandResult.Score = (int)(1000 * StringTools.FuzzyMatch(query.Search, commandResult.Title));
-                //commandResult.Title += " " + commandResult.Score;
+                commandResult.ContextData = recentActionDescriptor;
 
                 commandResult.Action = e =>
                 {
@@ -132,6 +132,23 @@ namespace Wox.Plugin.Recent
             }
         }
 
+        private static void Execute(string exec_path, string param)
+        {
+
+            Process process = new Process();
+            if (string.IsNullOrWhiteSpace(exec_path))
+            {
+                process.StartInfo.FileName = param;
+            }
+            else
+            {
+                process.StartInfo.FileName = exec_path;
+                process.StartInfo.Arguments = param;
+            }
+
+            process.Start();
+        }
+
         public List<Result> LoadContextMenus(Result selectedResult)
         {
             return new List<Result>
@@ -143,13 +160,42 @@ namespace Wox.Plugin.Recent
                     IcoPath = "Images\\sublime_logo.png",
                     Action = e =>
                     {
-                        string param = mroot.substitue_enviro_vars(selectedResult.SubTitle);
-                        string exec_path = mroot.substitue_enviro_vars("||default_file_processor||");
+                        var action = selectedResult.ContextData as RecentActionDescriptor;
+                        string param = mroot.substitue_enviro_vars(action.ActionLink);
+                        string exec_path =  mroot.substitue_enviro_vars(_settings.FileProcessor);
 
-                        Process process = new Process();
-                        process.StartInfo.FileName = exec_path;
-                        process.StartInfo.Arguments = param;
-                        process.Start();
+                        if (action.Target != null)
+                        {
+                            param = action.Target.Path;
+                        }
+
+                        Execute(exec_path,param);
+
+                        return true;
+                    }
+                },
+                 new Result()
+                {
+                    Title = "Open in directory browser",
+                    SubTitle = selectedResult.SubTitle,
+                    IcoPath = "Images\\folder.png",
+                    Action = e =>
+                    {
+                        var action = selectedResult.ContextData as RecentActionDescriptor;
+
+                        string param = mroot.substitue_enviro_vars(action.ActionLink);
+                        string exec_path =  mroot.substitue_enviro_vars(_settings.DirectoryManager);
+
+                        if (action.Target != null)
+                        {
+                            if(action.Target.IsDirectory == false)
+                            {
+                                var dir = Directory.GetParent(action.Target.Path);
+                                param = dir.FullName;
+                            }
+                        }
+
+                        Execute(exec_path,param);
                         return true;
                     }
                 }
